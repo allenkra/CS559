@@ -2,8 +2,10 @@ function setup() {
     var Canvas = document.getElementById("myCanvas");
     var CannonBallSizeSlider = document.getElementById("sizeSlider");
     var PositionSlider = document.getElementById("positionSlider");
-    
+    var cannonBallPositionX = 350;
+    var cannonBallSize;
     function draw() {
+        cannonBallSize = CannonBallSizeSlider.value; // 初始化炮弹的大小
         var context=Canvas.getContext('2d');
         dy = PositionSlider.value;
         function drawWarship(){
@@ -62,16 +64,35 @@ function setup() {
         
         }
 
+        function drawCannonBall() {
+            context.fillStyle = "black";
+            context.beginPath();
+            context.arc(cannonBallPositionX, 135, cannonBallSize, 0, 2 * Math.PI);
+            context.fill();
+        }
+
+
         drawWarship();
+        drawCannonBall();
         context.save();
         context.translate(0,dy);
         drawFlag();
 
         context.restore();
     }
-    PositionSlider.addEventListener("input",draw);
     CannonBallSizeSlider.addEventListener("input",draw)
+
+    PositionSlider.addEventListener("input", function() {
+        cannonBallSize = CannonBallSizeSlider.value; // 更新炮弹大小
+        draw();
+    });
     draw();
+
+
 }
-// Button to fire the cannon
+
+
+
 window.onload = setup;
+
+
