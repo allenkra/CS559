@@ -76,7 +76,7 @@ function draw() {
     drawWarship();
     drawCannonBall();
     context.save();
-    context.translate(0, dy);
+    context.translate(0, dy); // flag move 
     drawFlag();
     context.restore();
 
