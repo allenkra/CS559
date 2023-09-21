@@ -66,4 +66,9 @@ function setup() {
   slider2.addEventListener("input",draw);
   draw();
 }
+
+// Button to fire the cannon
+function fireCannon() {
+  firing = true;
+}
 window.onload = setup;

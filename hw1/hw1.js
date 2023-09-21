@@ -8,6 +8,7 @@ function setup() {
         var context=Canvas.getContext('2d');
         dy = PositionSlider.value;
         var cannonballX = 220; // initial location of cannonball
+        var cannonballSize = CannonBallSizeSlider.value;
         function drawWarship(){
 
             // clear Canvas
@@ -96,6 +97,11 @@ function setup() {
         context.restore();
     }
     PositionSlider.addEventListener("input",draw);
+    CannonBallSizeSlider.addEventListener("input",draw);
     draw();
+}
+// Button to fire the cannon
+function fireCannon() {
+    firing = true;
 }
 window.onload = setup;
