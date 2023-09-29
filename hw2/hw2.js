@@ -71,7 +71,7 @@ function drawSolarSystem() {
     ctx.translate(sunX, centerY);
     ctx.rotate(time / 40);
     ctx.translate(120, 0);
-    ctx.fillStyle = 'orange';
+    ctx.fillStyle = '#ADD8E6';
     ctx.beginPath();
     ctx.arc(0, 0, 15, 0, 2 * Math.PI);
     ctx.fill();
