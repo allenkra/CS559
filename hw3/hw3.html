@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Solar System Animation</title>
+    <script type="text/javascript" src="gl-matrix-min.js"></script>
+    <style>
+        body, html {
+            margin: 0;
+            height: 100%;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: black;
+            flex-direction: column;
+        }
+        .slider-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            padding: 10px;
+        }
+
+        label {
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="solarSystemCanvas" width="1200" height="650"></canvas>
+    
+    <div class="slider-container">
+        <label for="sunPosition">Sun Position:</label>
+        <input type="range" id="sunPosition" min="300" max="900" value="600">
+        
+        <label for="moonSpeed">Moon Rotation Speed:</label>
+        <input type="range" id="moonSpeed" min="1" max="100" value="50">
+
+        <label for="earthOrbit">Earth Orbit Size:</label>
+        <input type="range" id="earthOrbit" min="100" max="400" value="200">
+    </div>
+
+    <script src="hw3.js"></script>
+</body>
+</html>
