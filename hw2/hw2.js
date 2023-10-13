@@ -2,7 +2,7 @@ const canvas = document.getElementById('solarSystemCanvas');
 const ctx = canvas.getContext('2d');
 const sunPositionSlider = document.getElementById('sunPosition');
 const moonSpeedSlider = document.getElementById('moonSpeed');
-const earthOrbitSlider = document.getElementById('earthOrbit')
+const earthOrbitSlider = document.getElementById('earthOrbit');
 
 const centerY = canvas.height / 2;
 
