@@ -42,7 +42,7 @@ function drawSolarSystem() {
     ctx.fillStyle = 'yellow';
     arcTx(60,0,2 * PI);
     ctx.fill();
-    //stack.shift(); // restore
+    stack.shift(); // restore
 
 
     // Draw Earth
@@ -62,9 +62,8 @@ function drawSolarSystem() {
     // save 
     stack.unshift(mat3.clone(stack[0])); 
     var TEarthToSun = mat3.create();
-    mat3.fromTranslation(TEarthToSun,[sunX, canvas.height / 2]);
-    mat3.fromTranslation(TEarthToSun,[earthOrbit, 0]);
     mat3.rotate(TEarthToSun,TEarthToSun, time / 50);
+    mat3.translate(TEarthToSun,TEarthToSun ,[earthOrbit, 0]);
     mat3.multiply(stack[0], stack[0], TEarthToSun);
     ctx.fillStyle = 'blue';
     ctx.beginPath();
