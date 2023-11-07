@@ -5,8 +5,6 @@ function setup() {
     var cameraContext = cameraCanvas.getContext('2d');
     var slider1 = document.getElementById('slider1');
     slider1.value = 0;
-    var slider2 = document.getElementById('slider2');
-    slider2.value = 0;
 
     var context = cameraContext; // default to drawing in the camera window
 
@@ -289,7 +287,6 @@ function setup() {
     
   
     slider1.addEventListener("input",draw);
-    slider2.addEventListener("input",draw);
     draw();
 }
 window.onload = setup;
