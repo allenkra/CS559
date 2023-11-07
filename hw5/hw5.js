@@ -18,7 +18,6 @@ function setup() {
 
 	// use the sliders to get the angles
 	var tParam = slider1.value*0.01;
-    var viewAngle = slider2.value*0.02*Math.PI;
      
 	function moveToTx(loc,Tx)
 	{var res=vec3.create(); vec3.transformMat4(res,loc,Tx); context.moveTo(res[0],res[1]);}
@@ -31,10 +30,6 @@ function setup() {
         mat4.scale(Tx,Tx,[scale,scale,scale]);
         context.beginPath();
 	    context.fillStyle = color;
-        // moveToTx([-10,  0, 50],Tx);lineToTx([-10,  0, 10],Tx);lineToTx([-50,  0, 20],Tx);
-        // lineToTx([-10,  0,-10],Tx);lineToTx([-10,  0,-50],Tx);lineToTx([  0,  0,-60],Tx);
-        // lineToTx([ 10,  0,-50],Tx);lineToTx([ 10,  0,-10],Tx);lineToTx([ 50,  0, 20],Tx);
-        // lineToTx([ 10,  0, 10],Tx);lineToTx([ 10,  0, 50],Tx);lineToTx([  0, 20, 50],Tx);
 
         moveToTx([0,  0, -10],Tx);lineToTx([0, 10, 0],Tx);lineToTx([10,  0, 0],Tx);
         lineToTx([0,  -10, 0],Tx);lineToTx([-10,  0, 0],Tx);
@@ -119,26 +114,62 @@ function setup() {
 	    context.stroke();
 	}
 
+	var Hermite = function(t) {
+	    return [
+		2*t*t*t-3*t*t+1,
+		t*t*t-2*t*t+t,
+		-2*t*t*t+3*t*t,
+		t*t*t-t*t
+	    ];
+	}
 
-    function drawUpVector(color,vecUp,Tx) {
-	    context.strokeStyle=color;
-	    context.beginPath();
-	    // A single line segment in the "up" direction
-	    moveToTx([0,0,0],Tx);
-        lineToTx(vecUp,Tx);
-	    context.stroke();
-    }
+	var HermiteDerivative = function(t) {
+            return [
+		6*t*t-6*t,
+		3*t*t-4*t+1,
+		-6*t*t+6*t,
+		3*t*t-2*t
+            ];
+	}
 
-    // This is the function C(t)
+	function Cubic(basis,P,t){
+	    var b = basis(t);
+	    var result=vec3.create();
+	    vec3.scale(result,P[0],b[0]);
+	    vec3.scaleAndAdd(result,result,P[1],b[1]);
+	    vec3.scaleAndAdd(result,result,P[2],b[2]);
+	    vec3.scaleAndAdd(result,result,P[3],b[3]);
+	    return result;
+	}
+	
+	var p0=[100,160,0];
+	var d0=[0,80,120 * Math.PI];
+	var p1=[0,300,0];
+	var d1=[0,120 * Math.PI,0];
+
+	var P0 = [p0,d0,p1,d1]; // First two points and tangents
+
+	var C0 = function(t_) {return Cubic(Hermite,P0,t_);};
+
+	var C0prime = function(t_) {return Cubic(HermiteDerivative,P0,t_);};
+
+
     function Curve(t){
-        var result = [100.0*Math.cos(2.0*Math.PI*t),80.0*t,100.0*Math.sin(2.0*Math.PI*t)];
+        if (t < 2.0) {
+            var result = [100.0*Math.cos(2.0*Math.PI*t),80.0*t,60.0*Math.sin(2.0*Math.PI*t)];
+        } else {
+            var result = C0(t - 2.0);
+        }
 
         return result;
     }
                   
-    // And this is the derivative C'(t) -- which is the tangent vector
     function Tangent(t){
-        var result = [-200.0*Math.PI*Math.sin(2.0*Math.PI*t),80.0,200*Math.PI*Math.cos(2.0*Math.PI*t)];
+        if ( t < 2.0) {
+            var result = [-200.0*Math.PI*Math.sin(2.0*Math.PI*t),80.0,120*Math.PI*Math.cos(2.0*Math.PI*t)];
+        } else {
+            var result = C0prime(t - 2.0);
+        }
         return result;
     }
                   
@@ -193,13 +224,9 @@ function setup() {
     context = cameraContext;
 
     // Create Camera projection transform
-    // (orthographic for now)
     var TprojectionCamera = mat4.create();
     mat4.ortho(TprojectionCamera,-70,100,-70,100,-10,10);
-    //mat4.perspective(TprojectionCamera,Math.PI/4,1,-1,1); // Use for perspective teaser!
 
-    // Create Observer projection transform
-    // (orthographic for now)
     var TprojectionObserver = mat4.create();
     mat4.ortho(TprojectionObserver,-120,120,-120,120,-1,1);
      
@@ -222,9 +249,6 @@ function setup() {
     mat4.lookAt(Tmodel_rot, eyePlane, Tangent(tParam), upObserver);  
       mat4.invert(Tmodel_rot,Tmodel_rot);
       mat4.multiply(Tmodel,Tmodel,Tmodel_rot);
-      //var tangent = Ccomp_tangent(tParam);
-    //var angle = Math.atan2(tangent[1],tangent[0]);
-	//mat4.rotateZ(Tmodel,Tmodel,angle);
 
     // Create transform t_VP_PROJ_VIEW_MOD that incorporates
     // Viewport, projection, camera, and modeling transform
@@ -249,24 +273,18 @@ function setup() {
     //draw2DAxes("black", mat4.create());
 	draw3DAxes("grey",tVP_PROJ_VIEW_Camera,100.0);
     // drawUpVector("orange",upCamera,tVP_PROJ_VIEW_Camera,1.0);
-    drawTrajectory(0.0,2.0,100,Curve,tVP_PROJ_VIEW_Camera,"brown");
-    // draw3DAxes("green", tVP_PROJ_VIEW_MOD_Camera,100.0); // Uncomment to see "model" coords
+    drawTrajectory(0.0,3.0,100,Curve,tVP_PROJ_VIEW_Camera,"red");
     drawObject("green",tVP_PROJ_VIEW_MOD_Camera,1.0);
       
     // Draw the following in the Observer window
     context = observerContext;
 	draw3DAxes("grey",tVP_PROJ_VIEW_Observer,100.0);  
     // drawUpVector("orange",upCamera,tVP_PROJ_VIEW_Observer,1.0);
-    drawTrajectory(0.0,2.0,100,Curve,tVP_PROJ_VIEW_Observer,"brown");
+    drawTrajectory(0.0,3.0,100,Curve,tVP_PROJ_VIEW_Observer,"red");
     drawObject("green",tVP_PROJ_VIEW_MOD1_Observer,1.0);     
-
-    // Option #1 : Uncomment these to place the camera at the location where the right window is drawn
     drawCamera("purple",tVP_PROJ_VIEW_MOD1_Observer,10.0); 
 	drawUVWAxes("purple",tVP_PROJ_VIEW_MOD1_Observer,100.0);  
 
-    // Option #2 : Uncomment these to place the camera on the airplane
-    // drawCamera("purple",tVP_PROJ_VIEW_MOD1_Observer,10.0); 
-	// drawUVWAxes("purple",tVP_PROJ_VIEW_MOD1_Observer,100.0);  
     }
     
   
