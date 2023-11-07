@@ -31,12 +31,22 @@ function setup() {
         mat4.scale(Tx,Tx,[scale,scale,scale]);
         context.beginPath();
 	    context.fillStyle = color;
-        moveToTx([-10,  0, 50],Tx);lineToTx([-10,  0, 10],Tx);lineToTx([-50,  0, 20],Tx);
-        lineToTx([-10,  0,-10],Tx);lineToTx([-10,  0,-50],Tx);lineToTx([  0,  0,-60],Tx);
-        lineToTx([ 10,  0,-50],Tx);lineToTx([ 10,  0,-10],Tx);lineToTx([ 50,  0, 20],Tx);
-        lineToTx([ 10,  0, 10],Tx);lineToTx([ 10,  0, 50],Tx);lineToTx([  0, 20, 50],Tx);
+        // moveToTx([-10,  0, 50],Tx);lineToTx([-10,  0, 10],Tx);lineToTx([-50,  0, 20],Tx);
+        // lineToTx([-10,  0,-10],Tx);lineToTx([-10,  0,-50],Tx);lineToTx([  0,  0,-60],Tx);
+        // lineToTx([ 10,  0,-50],Tx);lineToTx([ 10,  0,-10],Tx);lineToTx([ 50,  0, 20],Tx);
+        // lineToTx([ 10,  0, 10],Tx);lineToTx([ 10,  0, 50],Tx);lineToTx([  0, 20, 50],Tx);
+
+        moveToTx([0,  0, -10],Tx);lineToTx([0, 10, 0],Tx);lineToTx([10,  0, 0],Tx);
+        lineToTx([0,  -10, 0],Tx);lineToTx([-10,  0, 0],Tx);
 	    context.closePath();
 	    context.fill();
+        context.beginPath();
+        context.strokeStyle = "blue";
+        moveToTx([0,  0, 0],Tx);lineToTx([0, 0, 50],Tx);lineToTx([10,  0, 65],Tx);
+        moveToTx([0,  0, 50],Tx);lineToTx([-10, 0, 65],Tx);
+        moveToTx([0,  0, 50],Tx);lineToTx([0, 10, 65],Tx);
+        moveToTx([0,  0, 50],Tx);lineToTx([0, -10, 65],Tx);
+        context.stroke();
 	}
 	
     function drawCamera(color,TxU,scale) {
@@ -109,22 +119,6 @@ function setup() {
 	    context.stroke();
 	}
 
-    function draw2DAxes(color,Tx) {
-	    context.strokeStyle=color;
-	    context.beginPath();
-	    // Axes
-	    moveToTx([120,0,0],Tx);lineToTx([0,0,0],Tx);lineToTx([0,120,0],Tx);
-	    // Arrowheads
-	    moveToTx([110,5,0],Tx);lineToTx([120,0,0],Tx);lineToTx([110,-5,0],Tx);
-	    moveToTx([5,110,0],Tx);lineToTx([0,120,0],Tx);lineToTx([-5,110,0],Tx);
-	    // X-label
-	    moveToTx([130,0,0],Tx);lineToTx([140,10,0],Tx);
-	    moveToTx([130,10,0],Tx);lineToTx([140,0,0],Tx);
-        // Y-label
-        moveToTx([0,128,0],Tx);lineToTx([5,133,0],Tx);lineToTx([10,128,0],Tx);
-        moveToTx([5,133,0],Tx);lineToTx([5,140,0],Tx);
-	    context.stroke();
-	}
 
     function drawUpVector(color,vecUp,Tx) {
 	    context.strokeStyle=color;
@@ -138,6 +132,7 @@ function setup() {
     // This is the function C(t)
     function Curve(t){
         var result = [100.0*Math.cos(2.0*Math.PI*t),80.0*t,100.0*Math.sin(2.0*Math.PI*t)];
+
         return result;
     }
                   
@@ -150,9 +145,9 @@ function setup() {
       var CameraCurve = function(angle) {
         var distance = 120.0;
         var eye = vec3.create();
-        eye[0] = distance*Math.sin(viewAngle);
+        eye[0] = distance*Math.sin(angle);
         eye[1] = 100;
-        eye[2] = distance*Math.cos(viewAngle);  
+        eye[2] = distance*Math.cos(angle);  
         return [eye[0],eye[1],eye[2]];
     }
 
@@ -171,9 +166,10 @@ function setup() {
     // and one for the "external observer"
 
     // Create Camera (lookAt) transform
-     var eyeCamera = CameraCurve(viewAngle);
-    var targetCamera = vec3.fromValues(0,0,0); // Aim at the origin of the world coords
-    var upCamera = vec3.fromValues(0,100,0); // Y-axis of world coords to be vertical
+     var eyeCamera = Curve(tParam);
+    //var targetCamera = vec3.fromValues(0,0,0); // Aim at the origin of the world coords
+    var targetCamera = Tangent(tParam);
+    var upCamera = vec3.fromValues(0,1,0); // Y-axis of world coords to be vertical
 	var TlookAtCamera = mat4.create();
     mat4.lookAt(TlookAtCamera, eyeCamera, targetCamera, upCamera);
       
@@ -186,7 +182,7 @@ function setup() {
       
     // Create ViewPort transform (assumed the same for both canvas instances)
     var Tviewport = mat4.create();
-	mat4.fromTranslation(Tviewport,[200,300,0]);  // Move the center of the
+	mat4.fromTranslation(Tviewport,[150,300,0]);  // Move the center of the
                                                   // "lookAt" transform (where
                                                   // the camera points) to the
                                                   // canvas coordinates (200,300)
@@ -199,7 +195,7 @@ function setup() {
     // Create Camera projection transform
     // (orthographic for now)
     var TprojectionCamera = mat4.create();
-    mat4.ortho(TprojectionCamera,-100,100,-100,100,-1,1);
+    mat4.ortho(TprojectionCamera,-70,100,-70,100,-10,10);
     //mat4.perspective(TprojectionCamera,Math.PI/4,1,-1,1); // Use for perspective teaser!
 
     // Create Observer projection transform
@@ -234,21 +230,27 @@ function setup() {
     // Viewport, projection, camera, and modeling transform
     var tVP_PROJ_VIEW_MOD_Camera = mat4.create();
 	mat4.multiply(tVP_PROJ_VIEW_MOD_Camera, tVP_PROJ_VIEW_Camera, Tmodel);
+
+
     var tVP_PROJ_VIEW_MOD1_Observer = mat4.create();
 	mat4.multiply(tVP_PROJ_VIEW_MOD1_Observer, tVP_PROJ_VIEW_Observer, Tmodel);
+
+
     var tVP_PROJ_VIEW_MOD2_Observer = mat4.create();
     mat4.translate(tVP_PROJ_VIEW_MOD2_Observer, tVP_PROJ_VIEW_Observer, eyeCamera);
+
+
 	var TlookFromCamera = mat4.create();
     mat4.invert(TlookFromCamera,TlookAtCamera);
     mat4.multiply(tVP_PROJ_VIEW_MOD2_Observer, tVP_PROJ_VIEW_MOD2_Observer, TlookFromCamera);
 
     // Draw the following in the Camera window
     context = cameraContext;
-    draw2DAxes("black", mat4.create());
+    //draw2DAxes("black", mat4.create());
 	draw3DAxes("grey",tVP_PROJ_VIEW_Camera,100.0);
     // drawUpVector("orange",upCamera,tVP_PROJ_VIEW_Camera,1.0);
     drawTrajectory(0.0,2.0,100,Curve,tVP_PROJ_VIEW_Camera,"brown");
-    draw3DAxes("green", tVP_PROJ_VIEW_MOD_Camera,100.0); // Uncomment to see "model" coords
+    // draw3DAxes("green", tVP_PROJ_VIEW_MOD_Camera,100.0); // Uncomment to see "model" coords
     drawObject("green",tVP_PROJ_VIEW_MOD_Camera,1.0);
       
     // Draw the following in the Observer window
@@ -259,12 +261,12 @@ function setup() {
     drawObject("green",tVP_PROJ_VIEW_MOD1_Observer,1.0);     
 
     // Option #1 : Uncomment these to place the camera at the location where the right window is drawn
-    // drawCamera("purple",tVP_PROJ_VIEW_MOD1_Observer,10.0); 
-	// drawUVWAxes("purple",tVP_PROJ_VIEW_MOD1_Observer,100.0);  
-
-    // Option #2 : Uncomment these to place the camera on the airplane
     drawCamera("purple",tVP_PROJ_VIEW_MOD1_Observer,10.0); 
 	drawUVWAxes("purple",tVP_PROJ_VIEW_MOD1_Observer,100.0);  
+
+    // Option #2 : Uncomment these to place the camera on the airplane
+    // drawCamera("purple",tVP_PROJ_VIEW_MOD1_Observer,10.0); 
+	// drawUVWAxes("purple",tVP_PROJ_VIEW_MOD1_Observer,100.0);  
     }
     
   
