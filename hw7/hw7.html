@@ -33,12 +33,15 @@
 
       const vec3  lightV    = vec3(0.0,-0.3,1.0);
       const float lightI    = 1.0;               // only for diffuse component
-      const float ambientC  = 0.3;
+      const float ambientC  = 0.5;
       const float diffuseC  = 0.5;
       const float specularC = 0.8;
       const float specularE = 32.0;
       const vec3  lightCol  = vec3(1.0,1.0,1.0);
       const vec3  objectCol = vec3(1.0,0.6,0.0); // yellow-ish orange
+      const vec3  lightV2    = vec3(1.0, 0.0, 0.0);   
+      const vec3  lightCol2  = vec3(1.0, 0.5, 0.5);  
+
       vec2 blinnPhongDir(vec3 lightDir, vec3 n, float lightInt, float Ka,
         float Kd, float Ks, float shininess) {
         vec3 s = normalize(lightDir);
@@ -52,8 +55,9 @@
       void main(void) {
         vec3 n = normalize(uMVn * fNormal);
         vec3 ColorS  = blinnPhongDir(lightV,n,0.0   ,0.0,     0.0,     specularC,specularE).y*lightCol;
+        vec3 ColorS2 = blinnPhongDir(lightV2,n,0.0, 0.0, 0.0, specularC, specularE).y*lightCol2;
         vec3 ColorAD = blinnPhongDir(lightV,n,lightI,ambientC,diffuseC,0.0,      1.0      ).x*fColor;
-        gl_FragColor = vec4(ColorAD+ColorS,1.0);
+        gl_FragColor = vec4(ColorAD+ColorS+ ColorS2* 10.0,1.0);
       }
     </script>
 
