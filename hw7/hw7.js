@@ -1,5 +1,10 @@
 function start() {
 
+    function Curve(t){
+        var result = [1.0*Math.cos(2.0*Math.PI*t),0.80*t,0.60*Math.sin(2.0*Math.PI*t)];
+        return result;
+    }
+
     // Get canvas, WebGL context
     var canvas = document.getElementById("mycanvas");
     var gl = canvas.getContext("webgl");
@@ -9,6 +14,9 @@ function start() {
     slider1.value = 0;
     var slider2 = document.getElementById('slider2');
     slider2.value = 0;
+    var slider3 = document.getElementById('slider3');
+    slider3.value = 0;
+
 
     // Read shader source
     var vertexSource = document.getElementById("vertexShader").text;
@@ -52,30 +60,60 @@ function start() {
     
     // vertex positions
     var vertexPos = new Float32Array(
-        [  1, 1, 1,  -1, 1, 1,  -1,-1, 1,   1,-1, 1,
-           1, 1, 1,   1,-1, 1,   1,-1,-1,   1, 1,-1,
-           1, 1, 1,   1, 1,-1,  -1, 1,-1,  -1, 1, 1,
-          -1, 1, 1,  -1, 1,-1,  -1,-1,-1,  -1,-1, 1,
-          -1,-1,-1,   1,-1,-1,   1,-1, 1,  -1,-1, 1,
-           1,-1,-1,  -1,-1,-1,  -1, 1,-1,   1, 1,-1 ]);
+        [  -1, -1, 0,   1, -1, 0,   1, 1, 0,    -1, 1, 0, // base rectangle,0123
+           -1, -1, 0,   1, -1, 0,   0, 0, 2,    // 456
+            1, -1, 0,   1, 1, 0,    0, 0, 2,    // 789
+            1, 1, 0,   -1, 1, 0,    0, 0, 2,    // 10 11 12
+            -1, 1, 0,   -1, -1, 0,    0, 0, 2, ]); // 13 14 15
 
+    vertex_normals = new Float32Array([
+    // # Base 
+        0,  0, -1,   
+        0,  0, -1,   
+        0,  0, -1,   
+        0,  0, -1,  
+
+    // # Side 1
+        0, -1,  1,   
+        0, -1,  1,   
+        0, -1,  1,   
+
+    // # Side 2
+        1,  0,  1,  
+        1,  0,  1,  
+        1,  0,  1,  
+
+    // # Side 3
+        0,  1,  1,   
+        0,  1,  1,   
+        0,  1,  1,   
+    
+        // # Side 4
+        -1,  0,  1,   
+        -1,  0,  1,   
+        -1,  0,  1,   
+    ]);
+            
     // vertex colors
     var vertexColors = new Float32Array(
-        [  0, 0, 1,   0, 0, 1,   0, 0, 1,   0, 0, 1,
-           1, 0, 0,   1, 0, 0,   1, 0, 0,   1, 0, 0,
-           0, 1, 0,   0, 1, 0,   0, 1, 0,   0, 1, 0,
-           1, 1, 0,   1, 1, 0,   1, 1, 0,   1, 1, 0,
-           1, 0, 1,   1, 0, 1,   1, 0, 1,   1, 0, 1,
-           0, 1, 1,   0, 1, 1,   0, 1, 1,   0, 1, 1 ]);
+        [  0, 0, 1,   0, 0, 1,   0, 0, 1,   0, 0, 1, //blue
+           1, 0, 0,   1, 0, 0,   1, 0, 0,   //red
+           0, 1, 0,   0, 1, 0,   0, 1, 0,   //green
+           1, 1, 0,   1, 1, 0,   1, 1, 0,   //yellow
+           1, 0, 1,   1, 0, 1,   1, 0, 1,]);    //pink
+    
     
     // element index array
-    var triangleIndices = new Uint8Array(
-        [  0, 1, 2,   0, 2, 3,    // front
-           4, 5, 6,   4, 6, 7,    // right
-           8, 9,10,   8,10,11,    // top
-           12,13,14,  12,14,15,    // left
-           16,17,18,  16,18,19,    // bottom
-	   20,21,22,  20,22,23 ]); // back
+    var triangleIndices = new Uint8Array([
+        // Base (as two triangles)
+        0, 1, 2,    0, 2, 3,
+    
+        4, 5, 6,    // Side 1
+        7, 8, 9,    // Side 2
+        10, 11, 12, // Side 3
+        13, 14, 15  // Side 4
+    ]);
+    
 
     // we need to put the vertices into a buffer so we can
     // block transfer them to the graphics hardware
@@ -83,14 +121,14 @@ function start() {
     gl.bindBuffer(gl.ARRAY_BUFFER, trianglePosBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, vertexPos, gl.STATIC_DRAW);
     trianglePosBuffer.itemSize = 3;
-    trianglePosBuffer.numItems = 24;
+    trianglePosBuffer.numItems = 16;
     
     // a buffer for colors
     var colorBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, vertexColors, gl.STATIC_DRAW);
     colorBuffer.itemSize = 3;
-    colorBuffer.numItems = 24;
+    colorBuffer.numItems = 16;
 
     // a buffer for indices
     var indexBuffer = gl.createBuffer();
@@ -103,15 +141,16 @@ function start() {
         // Translate slider values to angles in the [-pi,pi] interval
         var angle1 = slider1.value*0.01*Math.PI;
         var angle2 = slider2.value*0.01*Math.PI;
-	
+        var tParam = slider3.value*0.01;
         // Circle around the y-axis
-        var eye = [400*Math.sin(angle1),150.0,400.0*Math.cos(angle1)];
+        var eye = [400*Math.cos(angle1),400*Math.sin(angle1),300];
         var target = [0,0,0];
-        var up = [0,1,0];
+        var up = [0,0,1];
 	
         var tModel = mat4.create();
         mat4.fromScaling(tModel,[100,100,100]);
-        mat4.rotate(tModel,tModel,angle2,[1,1,1]);
+        // mat4.multiply(tModel, tModel, Curve(tParam));
+        // mat4.rotate(tModel,tModel,angle2,[1,1,1]);
 	
         var tCamera = mat4.create();
         mat4.lookAt(tCamera, eye, target, up);      
@@ -145,6 +184,7 @@ function start() {
 
     slider1.addEventListener("input",draw);
     slider2.addEventListener("input",draw);
+    slider3.addEventListener("input",draw);
     draw();
 }
 
