@@ -1,7 +1,7 @@
 function start() {
 
     function Curve(t){
-        var result = [1.0*Math.cos(2.0*Math.PI*t),0.80*t,0.60*Math.sin(2.0*Math.PI*t)];
+        var result = [5.0*Math.cos(2.0*Math.PI*t),4.0*t,3.0*Math.sin(2.0*Math.PI*t)];
         return result;
     }
 
@@ -148,9 +148,13 @@ function start() {
         var up = [0,0,1];
 	
         var tModel = mat4.create();
-        mat4.fromScaling(tModel,[100,100,100]);
+        mat4.fromScaling(tModel,[20,20,20]);
         // mat4.multiply(tModel, tModel, Curve(tParam));
-        // mat4.rotate(tModel,tModel,angle2,[1,1,1]);
+          mat4.rotate(tModel,tModel,angle2,Curve(tParam));
+        // 获取曲线上的当前点
+        var curvePoint = Curve(tParam);
+        // 将模型平移到曲线上的当前点
+        mat4.translate(tModel, tModel, curvePoint);
 	
         var tCamera = mat4.create();
         mat4.lookAt(tCamera, eye, target, up);      

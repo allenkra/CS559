@@ -33,7 +33,7 @@
 
       const vec3  lightV    = vec3(0.0,-0.3,1.0);
       const float lightI    = 1.0;               // only for diffuse component
-      const float ambientC  = 1.0;
+      const float ambientC  = 0.8;
       const float diffuseC  = 0.5;
       const float specularC = 0.8;
       const float specularE = 32.0;
@@ -57,11 +57,11 @@
       }
     </script>
 
-    <canvas id="mycanvas" width="500" height="500"></canvas>
+    <canvas id="mycanvas" width="1000" height="700"></canvas>
     <br>
     <input id="slider1" type="range" min="-100" max="100" />
     <input id="slider2" type="range" min="-100" max="100" />
-    <input id="slider3" type="range" min="0" max="300" />
+    <input id="slider3" type="range" min="0" max="130" />
     <script type="text/javascript" src="gl-matrix-min.js"></script>
     <script src="hw7.js" id="module"></script>
   </body>
