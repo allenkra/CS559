@@ -50,10 +50,18 @@ function start() {
     shaderProgram.PositionAttribute = gl.getAttribLocation(shaderProgram, "vPosition");
     gl.enableVertexAttribArray(shaderProgram.PositionAttribute);
     
-    shaderProgram.ColorAttribute = gl.getAttribLocation(shaderProgram, "vColor");
-    gl.enableVertexAttribArray(shaderProgram.ColorAttribute);    
+    shaderProgram.NormalAttribute = gl.getAttribLocation(shaderProgram, "vNormal");
+    gl.enableVertexAttribArray(shaderProgram.NormalAttribute);
     
+    shaderProgram.ColorAttribute = gl.getAttribLocation(shaderProgram, "vColor");
+    gl.enableVertexAttribArray(shaderProgram.ColorAttribute);
+    
+    shaderProgram.texcoordAttribute = gl.getAttribLocation(shaderProgram, "vTexCoord");
+    gl.enableVertexAttribArray(shaderProgram.texcoordAttribute);
+   
     // this gives us access to the matrix uniform
+    shaderProgram.MVmatrix = gl.getUniformLocation(shaderProgram,"uMV");
+    shaderProgram.MVNormalmatrix = gl.getUniformLocation(shaderProgram,"uMVn");
     shaderProgram.MVPmatrix = gl.getUniformLocation(shaderProgram,"uMVP");
 
     // Data ...
@@ -66,7 +74,7 @@ function start() {
             1, 1, 0,   -1, 1, 0,    0, 0, 2,    // 10 11 12
             -1, 1, 0,   -1, -1, 0,    0, 0, 2, ]); // 13 14 15
 
-    vertex_normals = new Float32Array([
+    var vertex_normals = new Float32Array([
     // # Base 
         0,  0, -1,   
         0,  0, -1,   
@@ -130,6 +138,13 @@ function start() {
     colorBuffer.itemSize = 3;
     colorBuffer.numItems = 16;
 
+    // a buffer for normals
+    var triangleNormalBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, triangleNormalBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, vertex_normals, gl.STATIC_DRAW);
+    triangleNormalBuffer.itemSize = 3;
+    triangleNormalBuffer.numItems = 16;
+
     // a buffer for indices
     var indexBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
@@ -162,9 +177,12 @@ function start() {
         var tProjection = mat4.create();
         mat4.perspective(tProjection,Math.PI/4,1,10,1000);
 	
+        var tMV = mat4.create();
+        var tMVn = mat3.create();
         var tMVP = mat4.create();
-        mat4.multiply(tMVP,tCamera,tModel); // "modelView" matrix
-        mat4.multiply(tMVP,tProjection,tMVP);
+        mat4.multiply(tMV,tCamera,tModel); // "modelView" matrix
+        mat3.normalFromMat4(tMVn,tMV);
+        mat4.multiply(tMVP,tProjection,tMV);
 	
         // Clear screen, prepare for rendering
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
@@ -172,14 +190,19 @@ function start() {
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	
         // Set up uniforms & attributes
+        gl.uniformMatrix4fv(shaderProgram.MVmatrix,false,tMV);
+        gl.uniformMatrix3fv(shaderProgram.MVNormalmatrix,false,tMVn);
         gl.uniformMatrix4fv(shaderProgram.MVPmatrix,false,tMVP);
-        
-        gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-        gl.vertexAttribPointer(shaderProgram.ColorAttribute, colorBuffer.itemSize,
-			       gl.FLOAT,false, 0, 0);
+                 
         gl.bindBuffer(gl.ARRAY_BUFFER, trianglePosBuffer);
         gl.vertexAttribPointer(shaderProgram.PositionAttribute, trianglePosBuffer.itemSize,
-			       gl.FLOAT, false, 0, 0);
+          gl.FLOAT, false, 0, 0);
+        gl.bindBuffer(gl.ARRAY_BUFFER, triangleNormalBuffer);
+        gl.vertexAttribPointer(shaderProgram.NormalAttribute, triangleNormalBuffer.itemSize,
+          gl.FLOAT, false, 0, 0);
+        gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+        gl.vertexAttribPointer(shaderProgram.ColorAttribute, colorBuffer.itemSize,
+          gl.FLOAT,false, 0, 0);
 
 	// Do the drawing
         gl.drawElements(gl.TRIANGLES, triangleIndices.length, gl.UNSIGNED_BYTE, 0);
