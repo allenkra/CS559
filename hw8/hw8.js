@@ -69,12 +69,7 @@ function start() {
     shaderProgram.texSampler1 = gl.getUniformLocation(shaderProgram, "texSampler1");
     gl.uniform1i(shaderProgram.texSampler1, 0);
 
-    // a buffer for textures
-    var textureBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, textureBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, vertexTextureCoords, gl.STATIC_DRAW);
-    textureBuffer.itemSize = 2;
-    textureBuffer.numItems = 24;
+
 
     // vertex positions
     var vertexPos = new Float32Array(
@@ -98,8 +93,8 @@ function start() {
         ]);
     
     var triangleIndices = new Uint8Array(
-        [  0, 1, 5,     1, 2, 5,    5, 2, 3,    5, 3, 4,    0, 5, 4,   // front
-           0, 4, 6,     4, 3, 6,    3, 2, 6,    1, 6, 2,    0, 6, 1,   // back
+        [  0, 1, 5,     1, 2, 5,    5, 2, 3,    5, 3, 4,    0, 5, 4,   //top
+           0, 4, 6,     4, 3, 6,    3, 2, 6,    1, 6, 2,    0, 6, 1,   //bottom
 	    ]);
     
     var vertex_normals = new Float32Array(
@@ -108,7 +103,7 @@ function start() {
         ]);
     
     var vertexTextureCoords = new Float32Array(
-        [  0.5,0.1686,  0.18,0.4085,    0.3073,0.75,    0.6928,0.75,    0.82,0.4085,
+        [  0.5,0.0,  0.18,0.25,    0.30,0.7,    0.7,0.7,    0.82,0.25,
             0.5,0.5,     0.5,0.5,
         ]);
 
@@ -118,27 +113,70 @@ function start() {
     gl.bindBuffer(gl.ARRAY_BUFFER, trianglePosBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, vertexPos, gl.STATIC_DRAW);
     trianglePosBuffer.itemSize = 3;
-    trianglePosBuffer.numItems = 16;
+    trianglePosBuffer.numItems = 7;
     
     // a buffer for colors
     var colorBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, vertexColors, gl.STATIC_DRAW);
     colorBuffer.itemSize = 3;
-    colorBuffer.numItems = 16;
+    colorBuffer.numItems = 7;
 
     // a buffer for normals
     var triangleNormalBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, triangleNormalBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, vertex_normals, gl.STATIC_DRAW);
     triangleNormalBuffer.itemSize = 3;
-    triangleNormalBuffer.numItems = 16;
+    triangleNormalBuffer.numItems = 7;
 
     // a buffer for indices
     var indexBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, triangleIndices, gl.STATIC_DRAW);    
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, triangleIndices, gl.STATIC_DRAW);   
+    
+    
+    // a buffer for textures
+    var textureBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, textureBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, vertexTextureCoords, gl.STATIC_DRAW);
+    textureBuffer.itemSize = 2;
+    textureBuffer.numItems = 7;
 
+    // Set up texture
+    var texture1 = gl.createTexture();
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, texture1);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    var image1 = new Image();
+
+
+    function initTextureThenDraw()
+    {
+      image1.onload = function() { loadTexture(image1,texture1); };
+      image1.crossOrigin = "anonymous";
+      image1.src = "https://live.staticflickr.com/5564/30725680942_0c6e60a13f_o.jpg";
+
+
+      window.setTimeout(draw,200);
+    }
+
+    function loadTexture(image,texture)
+    {
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+
+      // Option 1 : Use mipmap, select interpolation mode
+      gl.generateMipmap(gl.TEXTURE_2D);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+
+      // Option 2: At least use linear filters
+      // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+
+      // Optional ... if your shader & texture coordinates go outside the [0,1] range
+      // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    }   
     // Scene (re-)draw routine
     function draw() {
 	
@@ -193,6 +231,14 @@ function start() {
         gl.vertexAttribPointer(shaderProgram.ColorAttribute, colorBuffer.itemSize,
           gl.FLOAT,false, 0, 0);
 
+        gl.bindBuffer(gl.ARRAY_BUFFER, textureBuffer);
+        gl.vertexAttribPointer(shaderProgram.texcoordAttribute, textureBuffer.itemSize,
+        gl.FLOAT, false, 0, 0);
+
+        // Bind texture
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, texture1);
+
 	// Do the drawing
         gl.drawElements(gl.TRIANGLES, triangleIndices.length, gl.UNSIGNED_BYTE, 0);
 
@@ -201,7 +247,7 @@ function start() {
     slider1.addEventListener("input",draw);
     slider2.addEventListener("input",draw);
     slider3.addEventListener("input",draw);
-    draw();
+    initTextureThenDraw();
 }
 
 window.onload=start;
