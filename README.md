@@ -1,6 +1,3 @@
-# CS559
-My CS559 assignments
+# CS559 UW-Madison 2023 Fall
 
-First time to use git to manage my assignment
-
-A Memorial Moment !!!XD
+juse some roughly completed works
